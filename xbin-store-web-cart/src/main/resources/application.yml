@@ -9,6 +9,11 @@ dubbox:
     address: 192.168.125.128:2181
   annotation:
     package: cn.binux.cart.controller
+  monitor:
+    enabled: false
+    address: 192.168.125.1:6060
+    username: admin
+    password: admin
 
 #配置模板想到classpath路径，后面须加上"/"
 beetl:
@@ -28,5 +33,8 @@ server:
 # swagger2
 swagger2.package: cn.binux.cart.controller
 
-# Cookie Cart key
-cookie_cart_key: COOKIE_CART_KEY
+# Redis
+redisKey:
+  prefix:
+    # 用户登录信息前缀
+    user_session: 'USER_SESSION:'

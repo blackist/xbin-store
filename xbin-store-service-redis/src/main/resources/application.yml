@@ -19,10 +19,15 @@ dubbox:
     accepts: 1000
     serialization: kryo
     optimizer: cn.binux.serial.SerializationOptimizerImpl
+  monitor:
+    enabled: false
+    address: 192.168.125.1:6060
+    username: admin
+    password: admin
 
 # REDIS (RedisProperties)
 redis:
   cluster: false
   single-host: 192.168.125.133
   single-port: 6379
-
+  password:

@@ -1,19 +1,29 @@
 package cn.binux.admin.generate;
 
 
-import cn.binux.mapper.TbIndexSlideAdMapper;
-import cn.binux.pojo.TbIndexSlideAd;
-import cn.binux.utils.FastDFSClientUtils;
-import cn.binux.utils.FastJsonConvert;
-import org.springframework.context.support.ClassPathXmlApplicationContext;
-
-import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+
+import javax.imageio.ImageIO;
+
+import org.mybatis.spring.annotation.MapperScan;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.ConfigurableApplicationContext;
+
+import cn.binux.mapper.TbIndexSlideAdMapper;
+import cn.binux.pojo.TbIndexSlideAd;
+import cn.binux.utils.FastDFSClientUtils;
+import cn.binux.utils.FastJsonConvert;
+import cn.binux.utils.StorageFactory;
+import cn.binux.utils.StorageService;
 
 /**
  * json格式Category转成Java格式
@@ -22,13 +32,23 @@ import java.util.Map;
  * @create 2017-02-14 下午7:59
  */
 
+@SpringBootApplication
+@MapperScan(basePackages = "cn.binux.mapper")
 public class BigADGenerate {
 
-    public static void main(String[] args) {
-        ClassPathXmlApplicationContext applicationContext = new ClassPathXmlApplicationContext("classpath:spring/spring-context.xml");
+    private static TbIndexSlideAdMapper tbIndexSlideAdMapper;
+    
+    private static StorageService storageService;
 
-        TbIndexSlideAdMapper indexSlideAdMapper = applicationContext.getBean(TbIndexSlideAdMapper.class);
+    @Autowired
+    public void setTbIndexSlideAdMapper(TbIndexSlideAdMapper tbIndexSlideAdMapper) {
+        this.tbIndexSlideAdMapper = tbIndexSlideAdMapper;
+    }
 
+	public static void main(String[] args) {
+
+    	ConfigurableApplicationContext ctx = SpringApplication.run(new Object[]{BigADGenerate.class, StorageFactory.class}, args);
+    	storageService = ctx.getBean(StorageService.class);
         // 读取txt内容为字符串
         StringBuffer txtContent = new StringBuffer();
         // 每次读取的byte数
@@ -36,7 +56,7 @@ public class BigADGenerate {
         InputStream in = null;
         try {
             // 文件输入流
-            in = new FileInputStream(new File("/Volumes/HGST/IdeaProjects/xbin-store/xbin-store-service-admin/src/main/resources/BigAD.json"));
+            in = BigADGenerate.class.getResourceAsStream("/BigAD.json");
             int len;
             while ((len = in.read(b)) > 0) {
                 // 字符串拼接
@@ -80,13 +100,11 @@ public class BigADGenerate {
                 indexSlideAd.setUpdated(new Date());
                 indexSlideAd.setStatus(1);
 
-                indexSlideAdMapper.insert(indexSlideAd);
+                tbIndexSlideAdMapper.insert(indexSlideAd);
             }
 
 
         }
-
-        //saveToFastDFS("http://img1.360buyimg.com/da/jfs/t3277/84/6062111341/95397/a6665294/589ac5e0N2f54619b.jpg");
     }
 
     public static String  saveToFastDFS(String destUrl) {
@@ -100,8 +118,8 @@ public class BigADGenerate {
             baos = new ByteArrayOutputStream();
             ImageIO.write(image, "jpg", baos);
             baos.flush();
-
-            return FastDFSClientUtils.upload(baos.toByteArray(), "jpg");
+            //return FastDFSClientUtils.upload(baos.toByteArray(), "jpg");
+            return storageService.upload(baos.toByteArray(), "jpg");
         } catch (Exception e) {
         } finally {
             if (baos != null) {

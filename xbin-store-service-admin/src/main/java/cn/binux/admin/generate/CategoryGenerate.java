@@ -1,21 +1,31 @@
 package cn.binux.admin.generate;
 
 
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+
+import javax.imageio.ImageIO;
+
+import org.mybatis.spring.annotation.MapperScan;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.ConfigurableApplicationContext;
+
 import cn.binux.mapper.TbCategoryImageMapper;
 import cn.binux.mapper.TbCategorySecondaryMapper;
 import cn.binux.pojo.TbCategoryImage;
 import cn.binux.pojo.TbCategorySecondary;
 import cn.binux.utils.FastDFSClientUtils;
 import cn.binux.utils.FastJsonConvert;
-import org.springframework.context.support.ClassPathXmlApplicationContext;
-
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.io.*;
-import java.net.URL;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import cn.binux.utils.StorageFactory;
+import cn.binux.utils.StorageService;
 
 /**
  * json格式Category转成Java格式
@@ -24,13 +34,31 @@ import java.util.Map;
  * @create 2017-02-14 下午7:59
  */
 
+
+@SpringBootApplication
+@MapperScan(basePackages = "cn.binux.mapper")
 public class CategoryGenerate {
 
-    public static void main(String[] args) {
-        ClassPathXmlApplicationContext applicationContext = new ClassPathXmlApplicationContext("classpath:spring/spring-context.xml");
+    private static TbCategoryImageMapper tbCategoryImageMapper;
 
-        TbCategoryImageMapper categoryImageMapper = applicationContext.getBean(TbCategoryImageMapper.class);
-        TbCategorySecondaryMapper categorySecondaryMapper = applicationContext.getBean(TbCategorySecondaryMapper.class);
+    private static TbCategorySecondaryMapper tbCategorySecondaryMapper;
+    
+    private static StorageService storageService;
+
+    @Autowired
+    public void setTbCategoryImageMapper(TbCategoryImageMapper tbCategoryImageMapper) {
+        this.tbCategoryImageMapper = tbCategoryImageMapper;
+    }
+
+    @Autowired
+    public void setTbCategorySecondaryMapper(TbCategorySecondaryMapper tbCategorySecondaryMapper) {
+        this.tbCategorySecondaryMapper = tbCategorySecondaryMapper;
+    }
+
+    public static void main(String[] args) {
+
+    	ConfigurableApplicationContext ctx = SpringApplication.run(new Object[]{CategoryGenerate.class, StorageFactory.class}, args);
+    	storageService = ctx.getBean(StorageService.class);
 
         // 读取txt内容为字符串
         StringBuffer txtContent = new StringBuffer();
@@ -39,7 +67,7 @@ public class CategoryGenerate {
         InputStream in = null;
         try {
             // 文件输入流
-            in = new FileInputStream(new File("/Volumes/HGST/IdeaProjects/xbin-store/xbin-store-service-admin/src/main/resources/Category.json"));
+            in = CategoryGenerate.class.getResourceAsStream("/Category.json");
             int len;
             while ((len = in.read(b)) > 0) {
                 // 字符串拼接
@@ -81,8 +109,7 @@ public class CategoryGenerate {
                 categoryImage.setImageUrl(s);
                 categoryImage.setCreated(new Date());
                 categoryImage.setUpdated(new Date());
-
-                categoryImageMapper.insert(categoryImage);
+                tbCategoryImageMapper.insert(categoryImage);
             }
 
             List listp = (List) mapo.get("p");
@@ -101,7 +128,7 @@ public class CategoryGenerate {
                     categoryImage.setCreated(new Date());
                     categoryImage.setUpdated(new Date());
 
-                    categoryImageMapper.insert(categoryImage);
+                    tbCategoryImageMapper.insert(categoryImage);
                 }
 
             List map0 = (List) mapo.get("s");
@@ -121,7 +148,7 @@ public class CategoryGenerate {
                 categorySecondary.setCreated(new Date());
                 categorySecondary.setUpdated(new Date());
 
-                categorySecondaryMapper.insert(categorySecondary);
+                tbCategorySecondaryMapper.insert(categorySecondary);
 
 
                 if (map2 != null && map2.size() > 0) {
@@ -141,7 +168,7 @@ public class CategoryGenerate {
                         categorySecondary3.setCreated(new Date());
                         categorySecondary3.setUpdated(new Date());
 
-                        categorySecondaryMapper.insert(categorySecondary3);
+                        tbCategorySecondaryMapper.insert(categorySecondary3);
 
                         if (map4 != null && map4.size() > 0) {
                             for (int k = 0; k < map4.size(); k++) {
@@ -160,7 +187,7 @@ public class CategoryGenerate {
                                 categorySecondary4.setCreated(new Date());
                                 categorySecondary4.setUpdated(new Date());
 
-                                categorySecondaryMapper.insert(categorySecondary4);
+                                tbCategorySecondaryMapper.insert(categorySecondary4);
 
                                 if (map6 != null && map6.size() > 0) {
                                     System.out.println(s5);
@@ -187,7 +214,7 @@ public class CategoryGenerate {
                     categorySecondary.setCreated(new Date());
                     categorySecondary.setUpdated(new Date());
 
-                    categorySecondaryMapper.insert(categorySecondary);
+                    tbCategorySecondaryMapper.insert(categorySecondary);
                 }
 
         }
@@ -205,7 +232,8 @@ public class CategoryGenerate {
             ImageIO.write(image, "jpg", baos);
             baos.flush();
 
-            return FastDFSClientUtils.upload(baos.toByteArray(), "jpg");
+            //return FastDFSClientUtils.upload(baos.toByteArray(), "jpg");
+            return storageService.upload(baos.toByteArray(), "jpg");
         } catch (Exception e) {
         } finally {
             if (baos != null) {

@@ -19,6 +19,11 @@ dubbox:
     accepts: 1000
     serialization: kryo
     optimizer: cn.binux.serial.SerializationOptimizerImpl
+  monitor:
+    enabled: false
+    address: 192.168.125.1:6060
+    username: admin
+    password: admin
 
 druid:
     url: jdbc:mysql://localhost:3306/xbin_store?characterEncoding=utf-8
@@ -68,4 +73,10 @@ redisKey:
     # 首页广告
     index_ad: 'INDEX_AD'
 server:
-  port: 8052
+  port: 8510
+  
+storage:
+  type: fastdfs
+  fastdfs:
+    tracker_server: 192.168.125.129:22122
+  
